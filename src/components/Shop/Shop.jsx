@@ -7,12 +7,13 @@ import {
 import Cart from "../Cart/Cart";
 import Product from "../Product/Product";
 import "./Shop.css";
-import { Link } from "react-router-dom";
+import { Link, useLoaderData } from "react-router-dom";
 import useGetTotalCount from "../../hooks/useGetTotalCount";
 
 const Shop = () => {
+  const savedCart = useLoaderData();
   const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(savedCart);
   const [currentPage, setCurrentPage] = useState(0);
   const { count } = useGetTotalCount();
 
@@ -20,35 +21,17 @@ const Shop = () => {
   const [itemOfPages, setItemOfPage] = useState(10);
   const totalPage = Math.ceil(count / itemOfPages);
   const pages = [];
-  for (let index = 0; index <= totalPage; index++) {
+  for (let index = 0; index < totalPage; index++) {
     pages.push(index);
   }
 
   useEffect(() => {
-    fetch("http://localhost:5000/products")
+    fetch(
+      `http://localhost:5000/products?page=${currentPage}&limit=${itemOfPages}`
+    )
       .then((res) => res.json())
       .then((data) => setProducts(data));
-  }, []);
-
-  useEffect(() => {
-    const storedCart = getShoppingCart();
-    const savedCart = [];
-    // step 1: get id of the addedProduct
-    for (const id in storedCart) {
-      // step 2: get product from products state by using id
-      const addedProduct = products.find((product) => product._id === id);
-      if (addedProduct) {
-        // step 3: add quantity
-        const quantity = storedCart[id];
-        addedProduct.quantity = quantity;
-        // step 4: add the added product to the saved cart
-        savedCart.push(addedProduct);
-      }
-      // console.log('added Product', addedProduct)
-    }
-    // step 5: set the cart
-    setCart(savedCart);
-  }, [products]);
+  }, [currentPage, itemOfPages]);
 
   const handleAddToCart = (product) => {
     // cart.push(product); '
@@ -100,7 +83,6 @@ const Shop = () => {
       </div>
 
       <div className="pagination">
-        <p>{currentPage + 1}</p>
         <button
           onClick={() => currentPage > 0 && setCurrentPage(currentPage - 1)}
         >
@@ -108,16 +90,16 @@ const Shop = () => {
         </button>
         {pages.map((page) => (
           <button
-            className={currentPage === page && "selected"}
+            className={currentPage === page ? "selected" : ""}
             onClick={() => setCurrentPage(page)}
             key={page}
           >
-            {page + 1}
+            {page}
           </button>
         ))}
         <button
           onClick={() =>
-            currentPage !== totalPage && setCurrentPage(currentPage + 1)
+            currentPage + 1 < totalPage ? setCurrentPage(currentPage + 1) : ""
           }
         >
           Next
